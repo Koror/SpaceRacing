@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class MotoController : MonoBehaviour
 {
@@ -19,19 +17,16 @@ public class MotoController : MonoBehaviour
 
     private Rigidbody rb;
     private float currentAcceleration = 0;
-    private Quaternion defaultRotation = new Quaternion(0, 0, 90, 0);
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        //disable rigidbody sleeping to always detect collision
-        //rb.sleepThreshold = 0.0f;
         rb.centerOfMass = center.localPosition;
     }
 
     protected void LateUpdate()
     {
-        //freeze z rotation of moto
+        //centering z rotation of moto
         transform.eulerAngles = new Vector3(transform.localEulerAngles.x, transform.localEulerAngles.y, Mathf.MoveTowardsAngle(transform.localEulerAngles.z,0,0.2f));
     }
 
@@ -51,6 +46,7 @@ public class MotoController : MonoBehaviour
         {
             rb.AddRelativeTorque(new Vector3(0, rotateForce, 0));
         }
+
         Suspension(wheels, wheelsRayPos);
     }
 
@@ -58,7 +54,7 @@ public class MotoController : MonoBehaviour
     {
         RaycastHit hit;
 
-        //wheels to the starting position
+        //wheels to starting position
         wheels[0].localPosition = new Vector3(wheels[0].localPosition.x, 0, wheels[0].localPosition.z);
         wheels[1].localPosition = new Vector3(wheels[1].localPosition.x, 0, wheels[1].localPosition.z);
         for (int i = 0; i < wheelsRayPos.Length; i++)
@@ -74,20 +70,17 @@ public class MotoController : MonoBehaviour
 
                 //move moto forward
                 if (Input.GetKey(KeyCode.W))
-                    currentAcceleration += acceleration * Time.deltaTime;
+                    currentAcceleration += acceleration * Time.fixedDeltaTime;
                 else if (Input.GetKey(KeyCode.S))
-                    currentAcceleration -= acceleration * Time.deltaTime;
+                    currentAcceleration -= acceleration * Time.fixedDeltaTime;
                 else
                 {
-                    currentAcceleration = Mathf.MoveTowards(currentAcceleration, 0,Time.deltaTime * 2);
+                    currentAcceleration = Mathf.MoveTowards(currentAcceleration, 0,Time.fixedDeltaTime * 2);
                 }
                 //speed limit
-                if (currentAcceleration > maxAcceleration)
-                    currentAcceleration = maxAcceleration;
-                if (currentAcceleration < -maxAcceleration)
-                    currentAcceleration = -maxAcceleration;
-                rb.AddForce(transform.forward * currentAcceleration * motorForce);
+                currentAcceleration = Mathf.Clamp(currentAcceleration, -maxAcceleration, maxAcceleration);
 
+                rb.AddForce(transform.forward * currentAcceleration * motorForce);
                 //friction
                 rb.velocity -= (rb.velocity * procentFriction);
             }
